@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Английские шашки - изучение неправильных глаголов</title>
+<style>
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(to right, #ffecd2, #fcb69f);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    user-select: none;
+  }
+  h1, h2 {
+    font-weight: 700;
+    color: #333;
+    text-align: center;
+  }
+  button {
+    font-family: 'Nunito', sans-serif;
+    padding: 12px 20px;
+    margin-top: 15px;
+    font-size: 16px;
+    background-color: #FF6B6B;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+  button:hover {
+    background-color: #ff8787;
+    transform: scale(1.05);
+  }
+  #rules {
+    background: white;
+    border: 3px solid #444;
+    padding: 15px;
+    width: 400px;
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    border-radius: 15px;
+  }
+  #rules h3 {
+    margin-top: 0;
+    text-align: center;
+  }
+  #rules button {
+    margin-top: 15px;
+    padding: 10px 15px;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    transition: background-color 0.3s;
+  }
+  #rules button:hover {
+    background-color: #45a049;
+  }
+  #turn {
+    margin-top: 90px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #222;
+  }
+  #board {
+    display: grid;
+    grid-template-columns: repeat(8, 60px);
+    grid-template-rows: repeat(8, 60px);
+    gap: 2px;
+    background-color: #222;
+    border: 5px solid #333;
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    margin: 0 auto;
+  }
+  .cell {
+    width: 60px;
+    height: 60px;
+    background-color: #f0d9b5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cell:nth-child(even) {
+    background-color: #b58863;
+  }
+  .piece {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    box-shadow: inset 0 0 10px rgba(255,255,255,0.3), 0 2px 5px rgba(0,0,0,0.3);
+    transition: transform 0.2s ease;
+  }
+  .red {
+    background: linear-gradient(145deg, #ff4b5c, #ff6b6b);
+  }
+  .blue {
+    background: linear-gradient(145deg, #4d96ff, #6db3f2);
+  }
+  .king::after {
+    content: "👑";
+    font-size: 20px;
+    position: absolute;
+    top: 2px;
+    right: 2px;
+  }
+  #questionBox {
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 15px;
+    background-color: white;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    max-width: 500px;
+    text-align: center;
+  }
+  #question {
+    font-family: 'Comic Sans MS', cursive;
+    font-size: 18px;
+    color: #222;
+    margin-bottom: 10px;
+  }
+  #answer {
+    padding: 8px 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    width: 60%;
+  }
+  #submitBtn {
+    padding: 7px 15px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-left: 8px;
+    background-color: #2196f3;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+  }
+  #submitBtn:hover {
+    background-color: #1976d2;
+  }
+  #feedback {
+    margin-top: 10px;
+    font-weight: bold;
+    min-height: 24px;
+    font-size: 18px;
+  }
+  #message {
+    margin-top: 18px;
+    font-size: 20px;
+    color: #070;
+    font-weight: 700;
+    min-height: 30px;
+  }
+  #confetti-canvas {
+    position: fixed;
+    pointer-events: none;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+  }
+</style>
+</head>
+<body>
+
+<div id="rules">
+  <h3>🎯 Правила игры</h3>
+  <p>Игроки ходят шашками только после того, как правильно напишут глагол в прошедшем времени.<br>
+  Чтобы забрать шашку соперника, нужно дать верный ответ.<br>
+  Побеждает тот, кто захватит все шашки противника или заблокирует их ход.<br><br>
+  Нажмите <b>Начать игру</b> для старта.</p>
+  <button onclick="startGame()">Начать игру</button>
+</div>
+
+<h2 id="turn"></h2>
+
+<div id="board" aria-label="Игровое поле шашек" role="grid" tabindex="0"></div>
+
+<div id="questionBox" style="display:none;">
+  <p id="question"></p>
+  <input id="answer" autocomplete="off" placeholder="Ваш ответ..." />
+  <button id="submitBtn">Ответить</button>
+  <div id="feedback"></div>
+</div>
+
+<div id="message"></div>
+
+<canvas id="confetti-canvas"></canvas>
+
+<audio id="ding" src="https://www.soundjay.com/buttons/sounds/button-10.mp3"></audio>
+<audio id="buzz" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+
+<script>
+(() => {
+  // --- Данные глаголов ---
+  const verbs = {
+    "быть": "was/were",
+    "иметь": "had",
+    "делать": "did",
+    "идти": "went",
+    "брать": "took",
+    "приходить": "came",
+    "видеть": "saw",
+    "давать": "gave",
+    "знать": "knew",
+    "находить": "found",
+    "думать": "thought",
+    "покупать": "bought",
+    "писать": "wrote",
+    "читать": "read",
+    "говорить": "spoke",
+    "пить": "drank",
+    "петь": "sang",
+    "падать": "fell",
+    "плавать": "swam",
+    "ездить": "rode",
+    "есть": "ate",
+    "бегать": "ran",
+    "строить": "built",
+    "ломать": "broke",
+    "начинать": "began",
+    "рисовать": "drew",
+    "спать": "slept",
+    "держать": "held",
+    "стоять": "stood",
+    "сидеть": "sat",
+    "класть": "put",
+    "вставать": "rose",
+    "забывать": "forgot",
+    "прощать": "forgave",
+    "учить (кого-то)": "taught",
+    "учиться": "learnt",
+    "хранить": "kept",
+    "отправлять": "sent",
+    "платить": "paid",
+    "терять": "lost",
+    "ловить": "caught",
+    "рвать": "tore",
+    "кусать": "bit",
+    "бороться": "fought",
+    "встречать": "met",
+    "стоить": "cost",
+    "прятать": "hid"
+  };
+
+  // --- Переменные игры ---
+  const boardSize = 8;
+  const boardEl = document.getElementById('board');
+  const turnEl = document.getElementById('turn');
+  const questionBox = document.getElementById('questionBox');
+  const questionEl = document.getElementById('question');
+  const answerInput = document.getElementById('answer');
+  const submitBtn = document.getElementById('submitBtn');
+  const feedbackEl = document.getElementById('feedback');
+  const messageEl = document.getElementById('message');
+  const dingSound = document.getElementById('ding');
+  const buzzSound = document.getElementById('buzz');
+
+  let currentTeam = 'red'; // 'red' или 'blue'
+  let selectedPiece = null; // {row, col}
+  let mustCapture = false; // Нужно ли делать захват шашки (если можно)
+  let waitingForAnswer = false; // Ожидание ответа на вопрос
+  let actionType = ''; // 'move' или 'capture'
+  let possibleMoves = []; // Массив клеток куда можно ходить
+  let currentQuestion = null; // {verb, answer}
+
+  // --- Игровое поле - массив 8x8 ---
+  // 0 - пусто
+  // {team: 'red'/'blue', king: false} - шашка игрока
+  let board = [];
+
+  // --- Инициализация игрового поля ---
+  function initBoard() {
+    board = [];
+    for(let r=0; r<boardSize; r++) {
+      let row = [];
+      for(let c=0; c<boardSize; c++) {
+        // Расставляем шашки для red (внизу) и blue (вверху) по правилам
+        if ((r < 3) && ((r+c)%2 === 1)) {
+          row.push({team:'blue', king:false});
+        } else if ((r > 4) && ((r+c)%2 === 1)) {
+          row.push({team:'red', king:false});
+        } else {
+          row.push(0);
+        }
+      }
+      board.push(row);
+    }
+  }
+
+  // --- Рисуем доску ---
+  function drawBoard() {
+    boardEl.innerHTML = '';
+    for(let r=0; r<boardSize; r++) {
+      for(let c=0; c<boardSize; c++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        if ((r+c) % 2 === 1) {
+          cell.classList.add('dark');
+          cell.dataset.dark = '1';
+        } else {
+          cell.classList.add('light');
+          cell.dataset.dark = '0';
+        }
+        cell.dataset.row = r;
+        cell.dataset.col = c;
+        cell.setAttribute('role','gridcell');
+        cell.setAttribute('tabindex','-1');
+        if (selectedPiece && selectedPiece.row === r && selectedPiece.col === c) {
+          cell.classList.add('selected');
+        }
+
+        // Если на клетке шашка
+        const piece = board[r][c];
+        if(piece && piece !== 0) {
+          const pieceEl = document.createElement('div');
+          pieceEl.classList.add('piece', piece.team);
+          if(piece.king) pieceEl.style.border = '3px solid gold';
+          cell.appendChild(pieceEl);
+        }
+        boardEl.appendChild(cell);
+      }
+    }
+  }
+
+  // --- Проверка: шашка текущей команды ---
+  function isCurrentTeamPiece(r,c) {
+    const p = board[r][c];
+    return p && p !== 0 && p.team === currentTeam;
+  }
+
+  // --- Вычисление возможных ходов для шашки ---
+  // Возвращает массив объектов {toRow, toCol, capture: boolean, capturePos: {r,c} или null}
+  function getPossibleMoves(r,c) {
+    const moves = [];
+    const p = board[r][c];
+    if(!p || p===0) return moves;
+    const dir = p.team === 'red' ? -1 : 1; // red ходят вверх (-1), blue вниз (+1)
+    const enemy = p.team === 'red' ? 'blue' : 'red';
+
+    const directions = [];
+    if (p.king) {
+      // король ходит в 4 направления
+      directions.push([-1,-1], [-1,1], [1,-1], [1,1]);
+    } else {
+      // обычная шашка только вперед
+      directions.push([dir,-1], [dir,1]);
+    }
+
+    for(const [dr, dc] of directions) {
+      let nr = r+dr;
+      let nc = c+dc;
+      if (nr>=0 && nr<boardSize && nc>=0 && nc<boardSize) {
+        if(board[nr][nc]===0) {
+          // свободная клетка - ход возможен
+          moves.push({toRow: nr, toCol: nc, capture: false, capturePos: null});
+        } else if(board[nr][nc]!==0 && board[nr][nc].team === enemy) {
+          // есть враг, проверяем клетку дальше для захвата
+          const jr = nr+dr;
+          const jc = nc+dc;
+          if(jr>=0 && jr<boardSize && jc>=0 && jc<boardSize && board[jr][jc]===0) {
+            moves.push({toRow: jr, toCol: jc, capture: true, capturePos: {r:nr, c:nc}});
+          }
+        }
+      }
+    }
+    return moves;
+  }
+
+  // --- Проверка, есть ли у команды возможные захваты (приоритет) ---
+  function teamHasCapture(team) {
+    for(let r=0; r<boardSize; r++) {
+      for(let c=0; c<boardSize; c++) {
+        const p = board[r][c];
+        if(p && p!==0 && p.team === team) {
+          const moves = getPossibleMoves(r,c);
+          if(moves.some(m => m.capture)) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // --- Проверка победы ---
+  // Возвращает команду-победителя или null
+  function checkWin() {
+    const redPieces = board.flat().filter(p => p && p!==0 && p.team==='red').length;
+    const bluePieces = board.flat().filter(p => p && p!==0 && p.team==='blue').length;
+    if(redPieces === 0) return 'blue';
+    if(bluePieces === 0) return 'red';
+
+    // Проверка возможности ходов для каждой команды
+    function canMove(team) {
+      for(let r=0; r<boardSize; r++) {
+        for(let c=0; c<boardSize; c++) {
+          const p = board[r][c];
+          if(p && p!==0 && p.team === team) {
+            const moves = getPossibleMoves(r,c);
+            if(moves.length > 0) return true;
+          }
+        }
+      }
+      return false;
+    }
+    if(!canMove('red')) return 'blue';
+    if(!canMove('blue')) return 'red';
+
+    return null;
+  }
+
+  // --- Обновляем статус хода ---
+  function updateTurnText() {
+    turnEl.textContent = `The move of ${currentTeam === 'red' ? 'red' : 'blue'} team`;
+  }
+
+  // --- Генерация вопроса ---
+  function generateQuestion() {
+    const keys = Object.keys(verbs);
+    // Выбираем случайный глагол
+    const verb = keys[Math.floor(Math.random()*keys.length)];
+    return {verb: verb, answer: verbs[verb]};
+  }
+
+  // --- Отображение вопроса ---
+  function showQuestion() {
+    currentQuestion = generateQuestion();
+    questionEl.textContent = `Write past form of the verb ${currentQuestion.verb}`;
+    answerInput.value = '';
+    feedbackEl.textContent = '';
+    answerInput.focus();
+    waitingForAnswer = true;
+  }
+
+  // --- Обработка клика по клетке ---
+  function onCellClick(e) {
+    if (!waitingForAnswer) return; // Можно выбирать шашку/клетку только если ждем ответа
+    const cell = e.currentTarget;
+    const r = +cell.dataset.row;
+    const c = +cell.dataset.col;
+    if(selectedPiece) {
+      // Вторая клика - попытка походить выбранной шашкой
+      // Проверим, входит ли ход в possibleMoves
+      const move = possibleMoves.find(m => m.toRow === r && m.toCol === c);
+      if(move) {
+        // Задаем actionType (move или capture)
+        actionType = move.capture ? 'capture' : 'move';
+        // Сохраняем цель
+        targetMove = move;
+        showQuestion();
+      } else {
+        // Если кликнули не туда - отменяем выбор
+        selectedPiece = null;
+        possibleMoves = [];
+        drawBoard();
+      }
+    } else {
+      // Первая клика - выбрать шашку
+      if(isCurrentTeamPiece(r,c)) {
+        // Проверяем доступные ходы для этой шашки
+        let moves = getPossibleMoves(r,c);
+        // Если есть захваты у команды - ходить можно только захватами
+        if(teamHasCapture(currentTeam)) {
+          moves = moves.filter(m => m.capture);
+          if(moves.length === 0) {
+            // У этой шашки захватов нет, выбор отменяется
+            return;
+          }
+        }
+        if(moves.length > 0) {
+          selectedPiece = {row: r, col: c};
+          possibleMoves = moves;
+          drawBoard();
+          // Подсвечиваем возможные ходы
+          highlightMoves();
+        }
+      }
+    }
+  }
+
+  // --- Подсветка возможных ходов ---
+  function highlightMoves() {
+    const cells = boardEl.children;
+    possibleMoves.forEach(m => {
+      for(let i=0; i<cells.length; i++) {
+        const cell = cells[i];
+        if (+cell.dataset.row === m.toRow && +cell.dataset.col === m.toCol) {
+          cell.style.outline = '3px solid yellowgreen';
+        }
+      }
+    });
+  }
+
+  // --- Очистка подсветки ---
+  function clearHighlights() {
+    const cells = boardEl.children;
+    for(let i=0; i<cells.length; i++) {
+      cells[i].style.outline = '';
+    }
+  }
+
+  // --- Выполнение хода после правильного ответа ---
+  function makeMove() {
+    const {row: fr, col: fc} = selectedPiece;
+    const {toRow: tr, toCol: tc, capture, capturePos} = targetMove;
+
+    // Перемещаем шашку
+    const piece = board[fr][fc];
+    board[tr][tc] = piece;
+    board[fr][fc] = 0;
+
+    // Если захват - удаляем шашку соперника
+    if(capture && capturePos) {
+      board[capturePos.r][capturePos.c] = 0;
+    }
+
+    // Коронация (если дошли до последней линии)
+    if(piece.team === 'red' && tr === 0) piece.king = true;
+    if(piece.team === 'blue' && tr === boardSize-1) piece.king = true;
+
+    // Сброс выбора
+    selectedPiece = null;
+    possibleMoves = [];
+    clearHighlights();
+
+    drawBoard();
+  }
+
+  // --- Смена хода ---
+  function switchTurn() {
+    currentTeam = currentTeam === 'red' ? 'blue' : 'red';
+    updateTurnText();
+  }
+
+  // --- Начало новой игры ---
+  window.startGame = function() {
+    document.getElementById('rules').style.display = 'none';
+    questionBox.style.display = 'block';
+    messageEl.textContent = '';
+    currentTeam = 'red';
+    selectedPiece = null;
+    possibleMoves = [];
+    waitingForAnswer = false;
+    actionType = '';
+    targetMove = null;
+    initBoard();
+    drawBoard();
+    updateTurnText();
+    answerInput.disabled = false;
+    submitBtn.disabled = false;
+  }
+
+  // --- Обработка ответа ---
+  submitBtn.onclick = () => {
+    if(!waitingForAnswer) return;
+
+    const userAnswer = answerInput.value.trim().toLowerCase();
+    const correctAnswer = currentQuestion.answer.toLowerCase();
+
+    if(userAnswer === correctAnswer) {
+      feedbackEl.style.color = 'green';
+      feedbackEl.textContent = 'Fantastic! 🎉';
+      dingSound.play();
+      confetti();
+
+      // Выполняем ход или съедение
+      makeMove();
+
+      // Проверяем победу
+      const winner = checkWin();
+      if(winner) {
+        messageEl.textContent = `The  ${winner === 'red' ? 'red' : 'blue'} team wins! 🏆`;
+        answerInput.disabled = true;
+        submitBtn.disabled = true;
+        waitingForAnswer = false;
+        turnEl.textContent = '';
+        return;
+      }
+
+      // Смена хода
+      switchTurn();
+
+      // Сброс ожидания
+      waitingForAnswer = false;
+      actionType = '';
+      selectedPiece = null;
+      possibleMoves = [];
+
+      // Переходим к выбору шашки нового игрока
+      answerInput.value = '';
+      feedbackEl.textContent = '';
+      questionEl.textContent = 'Choose a checker and a square to move';
+      answerInput.disabled = true;
+      submitBtn.disabled = true;
+
+    } else {
+      feedbackEl.style.color = 'red';
+      feedbackEl.textContent = 'Wrong answer! The move goes to the opponent.';
+      buzzSound.play();
+
+      // Смена хода без хода шашкой
+      switchTurn();
+      waitingForAnswer = false;
+      actionType = '';
+      selectedPiece = null;
+      possibleMoves = [];
+      answerInput.value = '';
+      answerInput.disabled = true;
+      submitBtn.disabled = true;
+      questionEl.textContent = 'Choose a checker and a square to move';
+    }
+  }
+
+  // --- Обработка кликов по доске ---
+  boardEl.addEventListener('click', (e) => {
+    const target = e.target.closest('.cell');
+    if(!target) return;
+    // Можно выбирать шашку/клетку только если ответ не требуется (waitingForAnswer = false)
+    // Или если ждем ответа после выбора клетки - тогда игнорируем клики
+    if(waitingForAnswer) return;
+
+    const r = +target.dataset.row;
+    const c = +target.dataset.col;
+
+    // Если шашка текущего игрока выбрана
+    if(selectedPiece) {
+      // Попытка походить
+      let moves = possibleMoves;
+      const move = moves.find(m => m.toRow === r && m.toCol === c);
+      if(move) {
+        targetMove = move;
+        actionType = move.capture ? 'capture' : 'move';
+        showQuestion();
+        answerInput.disabled = false;
+        submitBtn.disabled = false;
+      } else {
+        // Снимаем выделение если кликнули не туда
+        selectedPiece = null;
+        possibleMoves = [];
+        clearHighlights();
+        drawBoard();
+      }
+    } else {
+      // Выбор шашки
+      if(isCurrentTeamPiece(r,c)) {
+        // Проверяем возможные ходы с учетом обязательного захвата
+        let moves = getPossibleMoves(r,c);
+        if(teamHasCapture(currentTeam)) {
+          moves = moves.filter(m => m.capture);
+          if(moves.length === 0) return;
+        }
+        if(moves.length > 0) {
+          selectedPiece = {row: r, col: c};
+          possibleMoves = moves;
+          drawBoard();
+          highlightMoves();
+          questionEl.textContent = 'Choose a checker and a square to move';
+          feedbackEl.textContent = '';
+          answerInput.value = '';
+          answerInput.disabled = true;
+          submitBtn.disabled = true;
+        }
+      }
+    }
+  });
+
+  // --- Обработка Enter в поле ответа ---
+  answerInput.addEventListener('keydown', e => {
+    if(e.key === 'Enter') {
+      submitBtn.click();
+    }
+  });
+
+  // --- Конфетти (простой вариант) ---
+  const confettiCanvas = document.getElementById('confetti-canvas');
+  const ctx = confettiCanvas.getContext('2d');
+  let confettiParticles = [];
+
+  function resizeCanvas() {
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  class ConfettiParticle {
+    constructor() {
+      this.x = Math.random() * confettiCanvas.width;
+      this.y = Math.random() * confettiCanvas.height - confettiCanvas.height;
+      this.size = 7 + Math.random()*7;
+      this.speedY = 2 + Math.random()*3;
+      this.speedX = (Math.random()-0.5)*1.5;
+      this.color = `hsl(${Math.random()*360}, 100%, 60%)`;
+      this.rotation = Math.random()*360;
+      this.rotationSpeed = (Math.random()-0.5)*10;
+    }
+    update() {
+      this.y += this.speedY;
+      this.x += this.speedX;
+      this.rotation += this.rotationSpeed;
+      if(this.y > confettiCanvas.height) {
+        this.y = -this.size;
+        this.x = Math.random() * confettiCanvas.width;
+      }
+    }
+    draw() {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.rotation * Math.PI / 180);
+      ctx.fillStyle = this.color;
+      ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
+      ctx.restore();
+    }
+  }
+
+  function confetti() {
+    for(let i=0; i<150; i++) {
+      confettiParticles.push(new ConfettiParticle());
+    }
+    let frames = 0;
+    function animate() {
+      frames++;
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      confettiParticles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      if(frames < 120) {
+        requestAnimationFrame(animate);
+      } else {
+        confettiParticles = [];
+        ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      }
+    }
+    animate();
+  }
+
+  // --- Начальное состояние ---
+  questionEl.textContent = 'Click "Start a game" to start';
+})();
+</script>
+
+</body>
+</html>
