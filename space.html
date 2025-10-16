@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Words - Module 2A</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .mode-selector {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .mode-btn {
+            padding: 12px 24px;
+            margin: 0 10px;
+            background-color: #5a8dee;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .mode-btn:hover {
+            background-color: #4a7de0;
+        }
+
+        .mode-btn.active {
+            background-color: #3a6dd0;
+        }
+
+        .content {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Flashcard Styles */
+        .flashcard-container {
+            perspective: 800px;
+            margin-bottom: 20px;
+            height: 300px;
+        }
+
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease;
+            cursor: pointer;
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .flashcard-front {
+            background-color: #e8f4fc;
+            color: #2c3e50;
+        }
+
+        .flashcard-back {
+            background-color: #f0f7ff;
+            color: #2c3e50;
+            transform: rotateY(180deg);
+            text-align: center;
+        }
+
+        .word {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .translation {
+            font-size: 28px;
+            color: #3a6dd0;
+            margin-bottom: 10px;
+        }
+
+        .transcription {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        .example {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 10px;
+            font-style: italic;
+            text-align: center;
+        }
+
+        .additional-translations {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #777;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            background-color: #5a8dee;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .nav-btn:hover {
+            background-color: #4a7de0;
+        }
+
+        .nav-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .progress {
+            text-align: center;
+            margin-top: 10px;
+            color: #666;
+        }
+
+        /* Test Styles */
+        .test-container {
+            display: none;
+        }
+
+        .question {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .option {
+            padding: 15px;
+            background-color: #f0f7ff;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .option:hover {
+            border-color: #5a8dee;
+            background-color: #e8f4fc;
+        }
+
+        .option.selected {
+            border-color: #5a8dee;
+            background-color: #d4e6ff;
+        }
+
+        .option.correct {
+            border-color: #4CAF50;
+            background-color: #e8f5e9;
+        }
+
+        .option.incorrect {
+            border-color: #f44336;
+            background-color: #ffebee;
+        }
+
+        .test-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .result {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+            display: none;
+        }
+
+        .highlight {
+            font-weight: bold;
+            color: #3a6dd0;
+        }
+
+        @media (max-width: 768px) {
+            .options {
+                grid-template-columns: 1fr;
+            }
+            
+            .flashcard-container {
+                height: 250px;
+            }
+            
+            .word {
+                font-size: 28px;
+            }
+            
+            .translation {
+                font-size: 24px;
+            }
+            
+            .flashcard-front, .flashcard-back {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>English Words - Module 2A</h1>
+            <p>Learn and test your vocabulary</p>
+        </header>
+
+        <div class="mode-selector">
+            <button class="mode-btn active" id="flashcardBtn">Flashcards</button>
+            <button class="mode-btn" id="testBtn">Test</button>
+        </div>
+
+        <div class="content">
+            <!-- Flashcard Mode -->
+            <div class="flashcard-mode">
+                <div class="flashcard-container">
+                    <div class="flashcard" id="flashcard">
+                        <div class="flashcard-front">
+                            <div class="word" id="wordFront"></div>
+                            <p>Click to flip</p>
+                        </div>
+                        <div class="flashcard-back">
+                            <div class="translation" id="wordBack"></div>
+                            <div class="transcription" id="transcription"></div>
+                            <div class="example" id="example"></div>
+                            <div class="additional-translations" id="additionalTranslations"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="nav-buttons">
+                    <button class="nav-btn" id="prevBtn">Previous</button>
+                    <button class="nav-btn" id="nextBtn">Next</button>
+                </div>
+                <div class="progress" id="progress"></div>
+            </div>
+
+            <!-- Test Mode -->
+            <div class="test-container" id="testContainer">
+                <div class="question" id="question"></div>
+                <div class="options" id="options"></div>
+                <div class="test-controls">
+                    <button class="nav-btn" id="checkBtn">Check Answer</button>
+                    <button class="nav-btn" id="nextTestBtn">Next Question</button>
+                </div>
+                <div class="result" id="result"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Word data with examples and additional translations
+        const words = [
+            {
+                russian: "безвоздушный",
+                english: "airless",
+                transcription: "/ˈɛərləs/",
+                example: "The moon has an airless environment.",
+                additional: "vacuum, void"
+            },
+            {
+                russian: "оборудование",
+                english: "equipment",
+                transcription: "/ɪˈkwɪpmənt/",
+                example: "We need to buy new gym equipment.",
+                additional: "gear, apparatus, tools"
+            },
+            {
+                russian: "сила тяготения",
+                english: "gravity",
+                transcription: "/ˈɡrævɪti/",
+                example: "Gravity keeps us grounded on Earth.",
+                additional: "gravitation, force of attraction"
+            },
+            {
+                russian: "чердак",
+                english: "attic",
+                transcription: "/ˈætɪk/",
+                example: "We found old photos in the attic.",
+                additional: "loft, garret"
+            },
+            {
+                russian: "вакуумный шланг",
+                english: "vacuum hose",
+                transcription: "/ˈvækjuːm hoʊz/",
+                example: "The vacuum hose needs to be replaced.",
+                additional: "suction tube, vacuum tube"
+            },
+            {
+                russian: "избегать",
+                english: "escape",
+                transcription: "/ɪˈskeɪp/",
+                example: "He tried to escape from the boring meeting.",
+                additional: "avoid, evade, elude"
+            },
+            {
+                russian: "подвал",
+                english: "basement",
+                transcription: "/ˈbeɪsmənt/",
+                example: "We store our wine in the basement.",
+                additional: "cellar, underground room"
+            },
+            {
+                russian: "отдельно стоящий",
+                english: "detached",
+                transcription: "/dɪˈtætʃt/",
+                example: "They live in a detached house.",
+                additional: "separate, freestanding, independent"
+            },
+            {
+                russian: "гребной тренажер",
+                english: "rowing machine",
+                transcription: "/ˈroʊɪŋ məˈʃiːn/",
+                example: "She uses the rowing machine for cardio.",
+                additional: "rower, ergometer"
+            },
+            {
+                russian: "свободная комната",
+                english: "spare room",
+                transcription: "/spɛr ruːm/",
+                example: "We have a spare room for guests.",
+                additional: "guest room, extra room"
+            },
+            {
+                russian: "тренировать",
+                english: "work out",
+                transcription: "/wɜːrk aʊt/",
+                example: "I work out at the gym three times a week.",
+                additional: "exercise, train, practice"
+            },
+            {
+                russian: "капля",
+                english: "droplet",
+                transcription: "/ˈdrɒplɪt/",
+                example: "A droplet of water fell from the leaf.",
+                additional: "drop, bead, globule"
+            },
+            {
+                russian: "трейлер",
+                english: "caravan",
+                transcription: "/ˈkærəvæn/",
+                example: "They traveled across the country in a caravan.",
+                additional: "trailer, mobile home, RV"
+            },
+            {
+                russian: "плотный трафик",
+                english: "busy schedule",
+                transcription: "/ˈbɪzi ˈʃɛdjuːl/",
+                example: "I have a busy schedule this week.",
+                additional: "hectic timetable, packed agenda"
+            },
+            {
+                russian: "житель",
+                english: "inhabitant",
+                transcription: "/ɪnˈhæbɪtənt/",
+                example: "The inhabitants of the island are friendly.",
+                additional: "resident, dweller, citizen"
+            },
+            {
+                russian: "странный",
+                english: "weird",
+                transcription: "/wɪrd/",
+                example: "That's a weird-looking plant.",
+                additional: "strange, odd, peculiar"
+            },
+            {
+                russian: "давить, надавливать",
+                english: "press against",
+                transcription: "/prɛs əˈɡɛnst/",
+                example: "Press the button against the wall firmly.",
+                additional: "push against, apply pressure to"
+            },
+            {
+                russian: "особенность",
+                english: "feature",
+                transcription: "/ˈfiːtʃər/",
+                example: "The new phone has an interesting feature.",
+                additional: "characteristic, trait, attribute"
+            },
+            {
+                russian: "посудомоечная машина",
+                english: "dishwasher",
+                transcription: "/ˈdɪʃˌwɒʃər/",
+                example: "The dishwasher makes cleaning easy.",
+                additional: "dishwashing machine"
+            },
+            {
+                russian: "плавать по воздуху",
+                english: "float",
+                transcription: "/floʊt/",
+                example: "The balloon will float in the air.",
+                additional: "hover, drift, levitate"
+            },
+            {
+                russian: "прикреплять, привязывать",
+                english: "strap",
+                transcription: "/stræp/",
+                example: "Strap your helmet on before riding.",
+                additional: "fasten, secure, attach"
+            },
+            {
+                russian: "пристально смотреть",
+                english: "stare",
+                transcription: "/stɛər/",
+                example: "It's rude to stare at people.",
+                additional: "gaze, look intently, glare"
+            },
+            {
+                russian: "недостаток",
+                english: "lack",
+                transcription: "/læk/",
+                example: "There is a lack of information on this topic.",
+                additional: "shortage, absence, deficiency"
+            },
+            {
+                russian: "космическая станция",
+                english: "space station",
+                transcription: "/speɪs ˈsteɪʃən/",
+                example: "The International Space Station orbits Earth.",
+                additional: "orbital station, space lab"
+            }
+        ];
+
+        // DOM Elements
+        const flashcardMode = document.querySelector('.flashcard-mode');
+        const testContainer = document.getElementById('testContainer');
+        const flashcardBtn = document.getElementById('flashcardBtn');
+        const testBtn = document.getElementById('testBtn');
+        const flashcard = document.getElementById('flashcard');
+        const wordFront = document.getElementById('wordFront');
+        const wordBack = document.getElementById('wordBack');
+        const transcription = document.getElementById('transcription');
+        const example = document.getElementById('example');
+        const additionalTranslations = document.getElementById('additionalTranslations');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const progress = document.getElementById('progress');
+        const question = document.getElementById('question');
+        const options = document.getElementById('options');
+        const checkBtn = document.getElementById('checkBtn');
+        const nextTestBtn = document.getElementById('nextTestBtn');
+        const result = document.getElementById('result');
+
+        // Flashcard variables
+        let currentCardIndex = 0;
+        let isFlipped = false;
+
+        // Test variables
+        let currentTestIndex = 0;
+        let testWords = [];
+        let selectedOption = null;
+        let score = 0;
+
+        // Initialize the app
+        function init() {
+            showFlashcard();
+            setupEventListeners();
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // Mode switching
+            flashcardBtn.addEventListener('click', () => switchMode('flashcards'));
+            testBtn.addEventListener('click', () => switchMode('test'));
+
+            // Flashcard navigation
+            flashcard.addEventListener('click', flipCard);
+            prevBtn.addEventListener('click', showPreviousCard);
+            nextBtn.addEventListener('click', showNextCard);
+
+            // Test controls
+            checkBtn.addEventListener('click', checkAnswer);
+            nextTestBtn.addEventListener('click', nextQuestion);
+        }
+
+        // Switch between flashcard and test modes
+        function switchMode(mode) {
+            if (mode === 'flashcards') {
+                flashcardMode.style.display = 'block';
+                testContainer.style.display = 'none';
+                flashcardBtn.classList.add('active');
+                testBtn.classList.remove('active');
+            } else {
+                flashcardMode.style.display = 'none';
+                testContainer.style.display = 'block';
+                flashcardBtn.classList.remove('active');
+                testBtn.classList.add('active');
+                startTest();
+            }
+        }
+
+        // Flashcard functions
+        function showFlashcard() {
+            const currentWord = words[currentCardIndex];
+            
+            // Update content immediately without animation
+            wordFront.textContent = currentWord.russian;
+            wordBack.innerHTML = `<span class="highlight">${currentWord.english}</span>`;
+            transcription.textContent = currentWord.transcription;
+            example.textContent = currentWord.example;
+            additionalTranslations.innerHTML = `Also: <span class="highlight">${currentWord.additional}</span>`;
+            
+            // Reset card to front immediately without animation
+            flashcard.style.transition = 'none';
+            flashcard.classList.remove('flipped');
+            isFlipped = false;
+            
+            // Force reflow to apply changes immediately
+            flashcard.offsetHeight;
+            
+            // Restore animation
+            flashcard.style.transition = 'transform 0.5s ease';
+            
+            updateProgress();
+        }
+
+        function flipCard() {
+            flashcard.classList.toggle('flipped');
+            isFlipped = !isFlipped;
+        }
+
+        function showPreviousCard() {
+            if (currentCardIndex > 0) {
+                currentCardIndex--;
+                showFlashcard();
+            }
+        }
+
+        function showNextCard() {
+            if (currentCardIndex < words.length - 1) {
+                currentCardIndex++;
+                showFlashcard();
+            }
+        }
+
+        function updateProgress() {
+            progress.textContent = `${currentCardIndex + 1} / ${words.length}`;
+        }
+
+        // Test functions
+        function startTest() {
+            testWords = [...words];
+            shuffleArray(testWords);
+            currentTestIndex = 0;
+            score = 0;
+            nextQuestion();
+        }
+
+        function nextQuestion() {
+            if (currentTestIndex >= testWords.length) {
+                showTestResults();
+                return;
+            }
+
+            const currentWord = testWords[currentTestIndex];
+            question.innerHTML = `What is the English translation of <span class="highlight">"${currentWord.russian}"</span>?`;
+            
+            // Generate options (1 correct + 3 random incorrect)
+            const optionsArray = [currentWord.english];
+            while (optionsArray.length < 4) {
+                const randomWord = words[Math.floor(Math.random() * words.length)];
+                if (!optionsArray.includes(randomWord.english)) {
+                    optionsArray.push(randomWord.english);
+                }
+            }
+            shuffleArray(optionsArray);
+            
+            // Display options
+            options.innerHTML = '';
+            optionsArray.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', () => selectOption(optionElement, optionsArray));
+                options.appendChild(optionElement);
+            });
+            
+            // Reset UI
+            selectedOption = null;
+            result.style.display = 'none';
+            checkBtn.disabled = false;
+            nextTestBtn.disabled = true;
+        }
+
+        function selectOption(optionElement, optionsArray) {
+            // Deselect all options
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // Select clicked option
+            optionElement.classList.add('selected');
+            selectedOption = optionElement.textContent;
+        }
+
+        function checkAnswer() {
+            if (!selectedOption) return;
+            
+            const currentWord = testWords[currentTestIndex];
+            const isCorrect = selectedOption === currentWord.english;
+            
+            // Show correct/incorrect
+            document.querySelectorAll('.option').forEach(opt => {
+                if (opt.textContent === currentWord.english) {
+                    opt.classList.add('correct');
+                } else if (opt.textContent === selectedOption && !isCorrect) {
+                    opt.classList.add('incorrect');
+                }
+                opt.style.pointerEvents = 'none';
+            });
+            
+            // Update score
+            if (isCorrect) {
+                score++;
+                result.textContent = "Correct!";
+                result.style.color = "#4CAF50";
+            } else {
+                result.textContent = `Incorrect! The right answer is "${currentWord.english}".`;
+                result.style.color = "#f44336";
+            }
+            
+            result.style.display = 'block';
+            checkBtn.disabled = true;
+            nextTestBtn.disabled = false;
+            currentTestIndex++;
+        }
+
+        function showTestResults() {
+            question.textContent = "Test Completed!";
+            options.innerHTML = '';
+            result.textContent = `Your score: ${score} out of ${testWords.length}`;
+            result.style.color = "#2c3e50";
+            result.style.display = 'block';
+            checkBtn.style.display = 'none';
+            nextTestBtn.textContent = 'Restart Test';
+            nextTestBtn.onclick = () => {
+                startTest();
+                checkBtn.style.display = 'block';
+                nextTestBtn.textContent = 'Next Question';
+            };
+        }
+
+        // Utility function to shuffle array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Initialize the application
+        init();
+    </script>
+</body>
+</html>
