@@ -40,11 +40,12 @@
             display: flex;
             justify-content: center;
             margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .mode-btn {
             padding: 12px 24px;
-            margin: 0 10px;
             background-color: #5a8dee;
             color: white;
             border: none;
@@ -245,8 +246,67 @@
             color: #3a6dd0;
         }
 
+        /* Matching game styles */
+        .matching-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .definitions, .words {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .definition-item, .word-item {
+            padding: 15px;
+            background-color: #f0f7ff;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .definition-item:hover, .word-item:hover {
+            border-color: #5a8dee;
+            background-color: #e8f4fc;
+        }
+
+        .definition-item.selected, .word-item.selected {
+            border-color: #5a8dee;
+            background-color: #d4e6ff;
+        }
+
+        .definition-item.matched, .word-item.matched {
+            border-color: #4CAF50;
+            background-color: #e8f5e9;
+            cursor: default;
+        }
+
+        .context-question {
+            font-size: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .context-sentence {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-style: italic;
+            border-left: 4px solid #5a8dee;
+        }
+
         @media (max-width: 768px) {
             .options {
+                grid-template-columns: 1fr;
+            }
+            
+            .matching-container {
                 grid-template-columns: 1fr;
             }
             
@@ -265,6 +325,11 @@
             .flashcard-front, .flashcard-back {
                 padding: 15px;
             }
+            
+            .mode-btn {
+                padding: 10px 15px;
+                font-size: 14px;
+            }
         }
     </style>
 </head>
@@ -277,7 +342,9 @@
 
         <div class="mode-selector">
             <button class="mode-btn active" id="flashcardBtn">Flashcards</button>
-            <button class="mode-btn" id="testBtn">Test</button>
+            <button class="mode-btn" id="testBtn">Translation Test</button>
+            <button class="mode-btn" id="matchingBtn">Matching Game</button>
+            <button class="mode-btn" id="contextBtn">Context Test</button>
         </div>
 
         <div class="content">
@@ -304,7 +371,7 @@
                 <div class="progress" id="progress"></div>
             </div>
 
-            <!-- Test Mode -->
+            <!-- Translation Test Mode -->
             <div class="test-container" id="testContainer">
                 <div class="question" id="question"></div>
                 <div class="options" id="options"></div>
@@ -314,187 +381,271 @@
                 </div>
                 <div class="result" id="result"></div>
             </div>
+
+            <!-- Matching Game Mode -->
+            <div class="test-container" id="matchingContainer">
+                <div class="question" id="matchingQuestion">Match the definitions with the correct words</div>
+                <div class="matching-container">
+                    <div class="definitions" id="definitions"></div>
+                    <div class="words" id="words"></div>
+                </div>
+                <div class="test-controls">
+                    <button class="nav-btn" id="checkMatchingBtn">Check Answers</button>
+                    <button class="nav-btn" id="nextMatchingBtn">Next Set</button>
+                </div>
+                <div class="result" id="matchingResult"></div>
+            </div>
+
+            <!-- Context Test Mode -->
+            <div class="test-container" id="contextContainer">
+                <div class="context-question" id="contextQuestion">Choose the correct word to complete the sentence</div>
+                <div class="context-sentence" id="contextSentence"></div>
+                <div class="options" id="contextOptions"></div>
+                <div class="test-controls">
+                    <button class="nav-btn" id="checkContextBtn">Check Answer</button>
+                    <button class="nav-btn" id="nextContextBtn">Next Question</button>
+                </div>
+                <div class="result" id="contextResult"></div>
+            </div>
         </div>
     </div>
 
     <script>
-        // Word data with examples and additional translations
+        // Word data with examples, additional translations and definitions
         const words = [
             {
                 russian: "безвоздушный",
                 english: "airless",
                 transcription: "/ˈɛərləs/",
                 example: "The moon has an airless environment.",
-                additional: "vacuum, void"
+                additional: "vacuum, void",
+                definition: "Without air; containing no air"
             },
             {
                 russian: "оборудование",
                 english: "equipment",
                 transcription: "/ɪˈkwɪpmənt/",
                 example: "We need to buy new gym equipment.",
-                additional: "gear, apparatus, tools"
+                additional: "gear, apparatus, tools",
+                definition: "The necessary items for a particular purpose"
             },
             {
                 russian: "сила тяготения",
                 english: "gravity",
                 transcription: "/ˈɡrævɪti/",
                 example: "Gravity keeps us grounded on Earth.",
-                additional: "gravitation, force of attraction"
+                additional: "gravitation, force of attraction",
+                definition: "The force that attracts objects towards each other"
             },
             {
                 russian: "чердак",
                 english: "attic",
                 transcription: "/ˈætɪk/",
                 example: "We found old photos in the attic.",
-                additional: "loft, garret"
+                additional: "loft, garret",
+                definition: "A space or room just below the roof of a building"
             },
             {
                 russian: "вакуумный шланг",
                 english: "vacuum hose",
                 transcription: "/ˈvækjuːm hoʊz/",
                 example: "The vacuum hose needs to be replaced.",
-                additional: "suction tube, vacuum tube"
+                additional: "suction tube, vacuum tube",
+                definition: "A flexible tube for a vacuum cleaner"
             },
             {
                 russian: "избегать",
                 english: "escape",
                 transcription: "/ɪˈskeɪp/",
                 example: "He tried to escape from the boring meeting.",
-                additional: "avoid, evade, elude"
+                additional: "avoid, evade, elude",
+                definition: "To get away from something or someone"
             },
             {
                 russian: "подвал",
                 english: "basement",
                 transcription: "/ˈbeɪsmənt/",
                 example: "We store our wine in the basement.",
-                additional: "cellar, underground room"
+                additional: "cellar, underground room",
+                definition: "The floor of a building partly or entirely below ground level"
             },
             {
                 russian: "отдельно стоящий",
                 english: "detached",
                 transcription: "/dɪˈtætʃt/",
                 example: "They live in a detached house.",
-                additional: "separate, freestanding, independent"
+                additional: "separate, freestanding, independent",
+                definition: "Not connected to another building or structure"
             },
             {
                 russian: "гребной тренажер",
                 english: "rowing machine",
                 transcription: "/ˈroʊɪŋ məˈʃiːn/",
                 example: "She uses the rowing machine for cardio.",
-                additional: "rower, ergometer"
+                additional: "rower, ergometer",
+                definition: "Exercise equipment that simulates rowing"
             },
             {
                 russian: "свободная комната",
                 english: "spare room",
                 transcription: "/spɛr ruːm/",
                 example: "We have a spare room for guests.",
-                additional: "guest room, extra room"
+                additional: "guest room, extra room",
+                definition: "An unused room available for visitors"
             },
             {
                 russian: "тренировать",
                 english: "work out",
                 transcription: "/wɜːrk aʊt/",
                 example: "I work out at the gym three times a week.",
-                additional: "exercise, train, practice"
+                additional: "exercise, train, practice",
+                definition: "To engage in physical exercise"
             },
             {
                 russian: "капля",
                 english: "droplet",
                 transcription: "/ˈdrɒplɪt/",
                 example: "A droplet of water fell from the leaf.",
-                additional: "drop, bead, globule"
+                additional: "drop, bead, globule",
+                definition: "A very small drop of liquid"
             },
             {
                 russian: "трейлер",
                 english: "caravan",
                 transcription: "/ˈkærəvæn/",
                 example: "They traveled across the country in a caravan.",
-                additional: "trailer, mobile home, RV"
+                additional: "trailer, mobile home, RV",
+                definition: "A vehicle equipped for living in, typically towed by a car"
             },
             {
                 russian: "плотный трафик",
                 english: "busy schedule",
                 transcription: "/ˈbɪzi ˈʃɛdjuːl/",
                 example: "I have a busy schedule this week.",
-                additional: "hectic timetable, packed agenda"
+                additional: "hectic timetable, packed agenda",
+                definition: "A timetable filled with many activities"
             },
             {
                 russian: "житель",
                 english: "inhabitant",
                 transcription: "/ɪnˈhæbɪtənt/",
                 example: "The inhabitants of the island are friendly.",
-                additional: "resident, dweller, citizen"
+                additional: "resident, dweller, citizen",
+                definition: "A person or animal that lives in a particular place"
             },
             {
                 russian: "странный",
                 english: "weird",
                 transcription: "/wɪrd/",
                 example: "That's a weird-looking plant.",
-                additional: "strange, odd, peculiar"
+                additional: "strange, odd, peculiar",
+                definition: "Very strange or unusual"
             },
             {
                 russian: "давить, надавливать",
                 english: "press against",
                 transcription: "/prɛs əˈɡɛnst/",
                 example: "Press the button against the wall firmly.",
-                additional: "push against, apply pressure to"
+                additional: "push against, apply pressure to",
+                definition: "To apply force to something by pushing"
             },
             {
                 russian: "особенность",
                 english: "feature",
                 transcription: "/ˈfiːtʃər/",
                 example: "The new phone has an interesting feature.",
-                additional: "characteristic, trait, attribute"
+                additional: "characteristic, trait, attribute",
+                definition: "A distinctive characteristic or aspect"
             },
             {
                 russian: "посудомоечная машина",
                 english: "dishwasher",
                 transcription: "/ˈdɪʃˌwɒʃər/",
                 example: "The dishwasher makes cleaning easy.",
-                additional: "dishwashing machine"
+                additional: "dishwashing machine",
+                definition: "A machine for washing dishes automatically"
             },
             {
                 russian: "плавать по воздуху",
                 english: "float",
                 transcription: "/floʊt/",
                 example: "The balloon will float in the air.",
-                additional: "hover, drift, levitate"
+                additional: "hover, drift, levitate",
+                definition: "To rest or move on the surface of a liquid or in the air"
             },
             {
                 russian: "прикреплять, привязывать",
                 english: "strap",
                 transcription: "/stræp/",
                 example: "Strap your helmet on before riding.",
-                additional: "fasten, secure, attach"
+                additional: "fasten, secure, attach",
+                definition: "To fasten or secure with a strip of material"
             },
             {
                 russian: "пристально смотреть",
                 english: "stare",
                 transcription: "/stɛər/",
                 example: "It's rude to stare at people.",
-                additional: "gaze, look intently, glare"
+                additional: "gaze, look intently, glare",
+                definition: "To look fixedly or vacantly at someone or something"
             },
             {
                 russian: "недостаток",
                 english: "lack",
                 transcription: "/læk/",
                 example: "There is a lack of information on this topic.",
-                additional: "shortage, absence, deficiency"
+                additional: "shortage, absence, deficiency",
+                definition: "The state of being without or not having enough of something"
             },
             {
                 russian: "космическая станция",
                 english: "space station",
                 transcription: "/speɪs ˈsteɪʃən/",
                 example: "The International Space Station orbits Earth.",
-                additional: "orbital station, space lab"
+                additional: "orbital station, space lab",
+                definition: "A large spacecraft that remains in low Earth orbit"
             }
+        ];
+
+        // Определения для режима сопоставления
+        const definitions = [
+            "Without air; containing no air",
+            "The necessary items for a particular purpose",
+            "The force that attracts objects towards each other",
+            "A space or room just below the roof of a building",
+            "A flexible tube for a vacuum cleaner",
+            "To get away from something or someone",
+            "The floor of a building partly or entirely below ground level",
+            "Not connected to another building or structure",
+            "Exercise equipment that simulates rowing",
+            "An unused room available for visitors",
+            "To engage in physical exercise",
+            "A very small drop of liquid",
+            "A vehicle equipped for living in, typically towed by a car",
+            "A timetable filled with many activities",
+            "A person or animal that lives in a particular place",
+            "Very strange or unusual",
+            "To apply force to something by pushing",
+            "A distinctive characteristic or aspect",
+            "A machine for washing dishes automatically",
+            "To rest or move on the surface of a liquid or in the air",
+            "To fasten or secure with a strip of material",
+            "To look fixedly or vacantly at someone or something",
+            "The state of being without or not having enough of something",
+            "A large spacecraft that remains in low Earth orbit"
         ];
 
         // DOM Elements
         const flashcardMode = document.querySelector('.flashcard-mode');
         const testContainer = document.getElementById('testContainer');
+        const matchingContainer = document.getElementById('matchingContainer');
+        const contextContainer = document.getElementById('contextContainer');
+        
         const flashcardBtn = document.getElementById('flashcardBtn');
         const testBtn = document.getElementById('testBtn');
+        const matchingBtn = document.getElementById('matchingBtn');
+        const contextBtn = document.getElementById('contextBtn');
+        
         const flashcard = document.getElementById('flashcard');
         const wordFront = document.getElementById('wordFront');
         const wordBack = document.getElementById('wordBack');
@@ -504,11 +655,28 @@
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
         const progress = document.getElementById('progress');
+        
+        // Translation test elements
         const question = document.getElementById('question');
         const options = document.getElementById('options');
         const checkBtn = document.getElementById('checkBtn');
         const nextTestBtn = document.getElementById('nextTestBtn');
         const result = document.getElementById('result');
+        
+        // Matching game elements
+        const definitionsEl = document.getElementById('definitions');
+        const wordsEl = document.getElementById('words');
+        const checkMatchingBtn = document.getElementById('checkMatchingBtn');
+        const nextMatchingBtn = document.getElementById('nextMatchingBtn');
+        const matchingResult = document.getElementById('matchingResult');
+        
+        // Context test elements
+        const contextQuestion = document.getElementById('contextQuestion');
+        const contextSentence = document.getElementById('contextSentence');
+        const contextOptions = document.getElementById('contextOptions');
+        const checkContextBtn = document.getElementById('checkContextBtn');
+        const nextContextBtn = document.getElementById('nextContextBtn');
+        const contextResult = document.getElementById('contextResult');
 
         // Flashcard variables
         let currentCardIndex = 0;
@@ -519,6 +687,16 @@
         let testWords = [];
         let selectedOption = null;
         let score = 0;
+
+        // Matching game variables
+        let currentMatchingSet = [];
+        let selectedDefinition = null;
+        let selectedWord = null;
+        let matchedPairs = 0;
+
+        // Context test variables
+        let currentContextIndex = 0;
+        let contextWords = [];
 
         // Initialize the app
         function init() {
@@ -531,6 +709,8 @@
             // Mode switching
             flashcardBtn.addEventListener('click', () => switchMode('flashcards'));
             testBtn.addEventListener('click', () => switchMode('test'));
+            matchingBtn.addEventListener('click', () => switchMode('matching'));
+            contextBtn.addEventListener('click', () => switchMode('context'));
 
             // Flashcard navigation
             flashcard.addEventListener('click', flipCard);
@@ -540,21 +720,51 @@
             // Test controls
             checkBtn.addEventListener('click', checkAnswer);
             nextTestBtn.addEventListener('click', nextQuestion);
+
+            // Matching game controls
+            checkMatchingBtn.addEventListener('click', checkMatching);
+            nextMatchingBtn.addEventListener('click', nextMatchingSet);
+
+            // Context test controls
+            checkContextBtn.addEventListener('click', checkContextAnswer);
+            nextContextBtn.addEventListener('click', nextContextQuestion);
         }
 
-        // Switch between flashcard and test modes
+        // Switch between modes
         function switchMode(mode) {
-            if (mode === 'flashcards') {
-                flashcardMode.style.display = 'block';
-                testContainer.style.display = 'none';
-                flashcardBtn.classList.add('active');
-                testBtn.classList.remove('active');
-            } else {
-                flashcardMode.style.display = 'none';
-                testContainer.style.display = 'block';
-                flashcardBtn.classList.remove('active');
-                testBtn.classList.add('active');
-                startTest();
+            // Hide all containers
+            flashcardMode.style.display = 'none';
+            testContainer.style.display = 'none';
+            matchingContainer.style.display = 'none';
+            contextContainer.style.display = 'none';
+            
+            // Remove active class from all buttons
+            flashcardBtn.classList.remove('active');
+            testBtn.classList.remove('active');
+            matchingBtn.classList.remove('active');
+            contextBtn.classList.remove('active');
+            
+            // Show selected container and set active button
+            switch(mode) {
+                case 'flashcards':
+                    flashcardMode.style.display = 'block';
+                    flashcardBtn.classList.add('active');
+                    break;
+                case 'test':
+                    testContainer.style.display = 'block';
+                    testBtn.classList.add('active');
+                    startTest();
+                    break;
+                case 'matching':
+                    matchingContainer.style.display = 'block';
+                    matchingBtn.classList.add('active');
+                    startMatchingGame();
+                    break;
+                case 'context':
+                    contextContainer.style.display = 'block';
+                    contextBtn.classList.add('active');
+                    startContextTest();
+                    break;
             }
         }
 
@@ -606,7 +816,7 @@
             progress.textContent = `${currentCardIndex + 1} / ${words.length}`;
         }
 
-        // Test functions
+        // Translation Test functions
         function startTest() {
             testWords = [...words];
             shuffleArray(testWords);
@@ -706,6 +916,234 @@
                 startTest();
                 checkBtn.style.display = 'block';
                 nextTestBtn.textContent = 'Next Question';
+            };
+        }
+
+        // Matching Game functions
+        function startMatchingGame() {
+            currentMatchingSet = getRandomWords(6); // Берем 6 случайных слов
+            matchedPairs = 0;
+            setupMatchingGame();
+        }
+
+        function getRandomWords(count) {
+            const shuffled = [...words].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, count);
+        }
+
+        function setupMatchingGame() {
+            definitionsEl.innerHTML = '';
+            wordsEl.innerHTML = '';
+            
+            // Перемешиваем определения и слова
+            const shuffledDefinitions = [...currentMatchingSet].sort(() => 0.5 - Math.random());
+            const shuffledWords = [...currentMatchingSet].sort(() => 0.5 - Math.random());
+            
+            // Создаем элементы определений
+            shuffledDefinitions.forEach((word, index) => {
+                const definitionItem = document.createElement('div');
+                definitionItem.className = 'definition-item';
+                definitionItem.textContent = word.definition;
+                definitionItem.dataset.index = index;
+                definitionItem.addEventListener('click', () => selectDefinition(definitionItem));
+                definitionsEl.appendChild(definitionItem);
+            });
+            
+            // Создаем элементы слов
+            shuffledWords.forEach((word, index) => {
+                const wordItem = document.createElement('div');
+                wordItem.className = 'word-item';
+                wordItem.textContent = word.english;
+                wordItem.dataset.word = word.english;
+                wordItem.addEventListener('click', () => selectWord(wordItem));
+                wordsEl.appendChild(wordItem);
+            });
+            
+            // Сбрасываем выбранные элементы
+            selectedDefinition = null;
+            selectedWord = null;
+            matchingResult.style.display = 'none';
+            checkMatchingBtn.disabled = false;
+            nextMatchingBtn.disabled = true;
+        }
+
+        function selectDefinition(definitionItem) {
+            if (definitionItem.classList.contains('matched')) return;
+            
+            // Снимаем выделение со всех определений
+            document.querySelectorAll('.definition-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // Выделяем выбранное определение
+            definitionItem.classList.add('selected');
+            selectedDefinition = definitionItem;
+            
+            checkIfPaired();
+        }
+
+        function selectWord(wordItem) {
+            if (wordItem.classList.contains('matched')) return;
+            
+            // Снимаем выделение со всех слов
+            document.querySelectorAll('.word-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // Выделяем выбранное слово
+            wordItem.classList.add('selected');
+            selectedWord = wordItem;
+            
+            checkIfPaired();
+        }
+
+        function checkIfPaired() {
+            if (selectedDefinition && selectedWord) {
+                checkMatching();
+            }
+        }
+
+        function checkMatching() {
+            if (!selectedDefinition || !selectedWord) return;
+            
+            const definitionIndex = parseInt(selectedDefinition.dataset.index);
+            const selectedWordText = selectedWord.dataset.word;
+            const correctWord = currentMatchingSet[definitionIndex].english;
+            
+            if (selectedWordText === correctWord) {
+                // Правильное сопоставление
+                selectedDefinition.classList.add('matched');
+                selectedWord.classList.add('matched');
+                matchedPairs++;
+                
+                if (matchedPairs === currentMatchingSet.length) {
+                    matchingResult.textContent = "Perfect! All matches are correct!";
+                    matchingResult.style.color = "#4CAF50";
+                    matchingResult.style.display = 'block';
+                    checkMatchingBtn.disabled = true;
+                    nextMatchingBtn.disabled = false;
+                }
+            } else {
+                // Неправильное сопоставление
+                matchingResult.textContent = "Incorrect match. Try again!";
+                matchingResult.style.color = "#f44336";
+                matchingResult.style.display = 'block';
+                
+                // Снимаем выделение
+                selectedDefinition.classList.remove('selected');
+                selectedWord.classList.remove('selected');
+                selectedDefinition = null;
+                selectedWord = null;
+            }
+        }
+
+        function nextMatchingSet() {
+            startMatchingGame();
+        }
+
+        // Context Test functions
+        function startContextTest() {
+            contextWords = [...words];
+            shuffleArray(contextWords);
+            currentContextIndex = 0;
+            score = 0;
+            nextContextQuestion();
+        }
+
+        function nextContextQuestion() {
+            if (currentContextIndex >= contextWords.length) {
+                showContextResults();
+                return;
+            }
+
+            const currentWord = contextWords[currentContextIndex];
+            
+            // Создаем предложение с пропуском
+            const sentence = currentWord.example.replace(currentWord.english, '__________');
+            contextSentence.textContent = sentence;
+            
+            // Генерируем варианты ответов
+            const optionsArray = [currentWord.english];
+            while (optionsArray.length < 4) {
+                const randomWord = words[Math.floor(Math.random() * words.length)];
+                if (!optionsArray.includes(randomWord.english)) {
+                    optionsArray.push(randomWord.english);
+                }
+            }
+            shuffleArray(optionsArray);
+            
+            // Отображаем варианты
+            contextOptions.innerHTML = '';
+            optionsArray.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', () => selectContextOption(optionElement));
+                contextOptions.appendChild(optionElement);
+            });
+            
+            // Сбрасываем UI
+            contextResult.style.display = 'none';
+            checkContextBtn.disabled = false;
+            nextContextBtn.disabled = true;
+        }
+
+        function selectContextOption(optionElement) {
+            // Снимаем выделение со всех вариантов
+            document.querySelectorAll('#contextOptions .option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // Выделяем выбранный вариант
+            optionElement.classList.add('selected');
+            selectedOption = optionElement.textContent;
+        }
+
+        function checkContextAnswer() {
+            if (!selectedOption) return;
+            
+            const currentWord = contextWords[currentContextIndex];
+            const isCorrect = selectedOption === currentWord.english;
+            
+            // Показываем правильный/неправильный ответ
+            document.querySelectorAll('#contextOptions .option').forEach(opt => {
+                if (opt.textContent === currentWord.english) {
+                    opt.classList.add('correct');
+                } else if (opt.textContent === selectedOption && !isCorrect) {
+                    opt.classList.add('incorrect');
+                }
+                opt.style.pointerEvents = 'none';
+            });
+            
+            // Обновляем счет
+            if (isCorrect) {
+                score++;
+                contextResult.textContent = "Correct!";
+                contextResult.style.color = "#4CAF50";
+            } else {
+                contextResult.textContent = `Incorrect! The right answer is "${currentWord.english}".`;
+                contextResult.style.color = "#f44336";
+            }
+            
+            contextResult.style.display = 'block';
+            checkContextBtn.disabled = true;
+            nextContextBtn.disabled = false;
+            currentContextIndex++;
+        }
+
+        function showContextResults() {
+            contextQuestion.textContent = "Context Test Completed!";
+            contextSentence.textContent = '';
+            contextOptions.innerHTML = '';
+            contextResult.textContent = `Your score: ${score} out of ${contextWords.length}`;
+            contextResult.style.color = "#2c3e50";
+            contextResult.style.display = 'block';
+            checkContextBtn.style.display = 'none';
+            nextContextBtn.textContent = 'Restart Test';
+            nextContextBtn.onclick = () => {
+                startContextTest();
+                checkContextBtn.style.display = 'block';
+                nextContextBtn.textContent = 'Next Question';
             };
         }
 
